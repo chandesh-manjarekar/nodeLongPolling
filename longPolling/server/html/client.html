@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document</title>
+</head>
+
+<body>
+  <input type="text" id="from" placeholder="Your Name" />
+  <input type="text" id="input" placeholder="Your message..." />
+  <button onclick="message(document.getElementById('from').value,document.getElementById('input').value)">Send</button>
+  <div id="messages"></div>
+  <script>
+    function longPoll(backoffTime = 1) {
+      document.getElementById("messages").innerHTML += `Polling the server to check for message... <br>`;
+      fetch(`/api/long-poll`)
+        .then(res => res.json())
+        .then(data => {
+          (document.getElementById("messages").innerHTML += `Message - from: ${data.from} - message: ${data.responseDesc}<br>`);
+          longPoll();
+        })
+        .catch(err => {
+          console.error('Error:', err);
+          setTimeout(() => {
+          longPoll(backoffTime * 2);
+        }, backoffTime * 1000);
+      });
+    }
+    function message(from, message) {
+      const data = {
+        "from": from,
+        "message": message
+      };
+      document.getElementById("from").value = "";
+      document.getElementById("input").value = "";
+      fetch(`/api/long-poll/message`, {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      });
+    }
+    longPoll();
+  </script>
+</body>
+
+</html>
